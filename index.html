@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="Eine kleine installierbare Hallo-Welt-PWA.">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon-192.png">
+  <title>Hallo Welt – PWA</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100svh; display: grid; place-items: center;
+           background: radial-gradient(circle at top, #dbeafe, #eff6ff 45%, #f8fafc);
+           color: #172554; }
+    main { width: min(92vw, 560px); padding: 3rem 2rem; text-align: center;
+           background: #ffffffdd; border: 1px solid #bfdbfe; border-radius: 28px;
+           box-shadow: 0 24px 70px #1e3a8a22; }
+    .mark { width: 72px; height: 72px; margin: 0 auto 1.5rem; display: grid;
+            place-items: center; border-radius: 22px; color: white; background: #2563eb;
+            font-size: 2rem; }
+    h1 { margin: 0 0 .75rem; font-size: clamp(2rem, 8vw, 3.5rem); }
+    p { color: #475569; line-height: 1.6; }
+    button { margin-top: 1rem; padding: .85rem 1.2rem; border: 0; border-radius: 999px;
+             background: #2563eb; color: white; font: inherit; font-weight: 650; cursor: pointer; }
+    button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
+    #status { min-height: 1.5em; font-size: .9rem; }
+    @media (prefers-color-scheme: dark) {
+      body { background: radial-gradient(circle at top, #1e3a8a, #0f172a 60%); color: #eff6ff; }
+      main { background: #0f172add; border-color: #334155; }
+      p { color: #cbd5e1; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="mark" aria-hidden="true">✦</div>
+    <h1>Hallo Welt! 👋</h1>
+    <p>Deine erste Progressive Web App läuft.</p>
+    <button id="install" hidden>App installieren</button>
+    <p id="status" role="status">Prüfe Offline-Funktion …</p>
+  </main>
+  <script>
+    const status = document.querySelector("#status");
+    const installButton = document.querySelector("#install");
+    let installPrompt;
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", async () => {
+        try {
+          await navigator.serviceWorker.register("/sw.js");
+          status.textContent = "Bereit – diese App kann auch offline starten.";
+        } catch (error) {
+          status.textContent = "Service Worker konnte nicht registriert werden.";
+          console.error(error);
+        }
+      });
+    } else {
+      status.textContent = "Dieser Browser unterstützt keine Service Worker.";
+    }
+
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      installPrompt = event;
+      installButton.hidden = false;
+    });
+
+    installButton.addEventListener("click", async () => {
+      if (!installPrompt) return;
+      installPrompt.prompt();
+      await installPrompt.userChoice;
+      installPrompt = null;
+      installButton.hidden = true;
+    });
+
+    window.addEventListener("appinstalled", () => {
+      installButton.hidden = true;
+      status.textContent = "App erfolgreich installiert. Viel Spaß!";
+    });
+  </script>
+</body>
+</html>
